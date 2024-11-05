@@ -23,7 +23,7 @@ __global__ void vectorAdd(int* a, int* b, int* c, int length)
 }
 
 // Initializes the passed vector with a random number in [0, 99]
-void initMatrix(int* m, const int size)
+void initVector(int* m, const int size)
 {
 	for (int i = 0; i < size; i++)
 	{
@@ -55,8 +55,8 @@ int main()
 	cudaMalloc(&d_b, bytesNum);
 	cudaMalloc(&d_c, bytesNum);
 
-	initMatrix(h_a, length);
-	initMatrix(h_b, length);
+	initVector(h_a, length);
+	initVector(h_b, length);
 
 	// Copies data from CPU to GPU
 	cudaMemcpy(d_a, h_a, bytesNum, cudaMemcpyHostToDevice);
@@ -67,7 +67,7 @@ int main()
 	const int NUM_BLOCKS = (int)ceil(length / NUM_THREADS);
 
 	// Computes vector addition
-	vectorAdd<<<NUM_BLOCKS, NUM_THREADS>>>(d_a, d_b, d_c, length);
+	vectorAdd << <NUM_BLOCKS, NUM_THREADS >> > (d_a, d_b, d_c, length);
 
 	// Copies back result from GPU to CPU
 	cudaMemcpy(h_c, d_c, bytesNum, cudaMemcpyDeviceToHost);

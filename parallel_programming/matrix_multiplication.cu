@@ -44,7 +44,7 @@ void initMatrix(int* m, const int size)
 	{
 		for (int j = 0; j < size; j++)
 		{
-			m[i][j] = rand() % 100;
+			m[i * size + j] = rand() % 100;
 		}
 	}
 }
@@ -58,22 +58,24 @@ __global__ void matrixMultiplication(int* a, int* b, int* c, int size)
 	int tmp = 0;
 	if (row < size && col < size)
 	{
-		for (int k = 0; k < n; k++)
+		for (int k = 0; k < size; k++)
 		{
 			// In this computation we need to think about a single thread because they have unique row and col
 			// Thus wedon't need 3 for loops but just 1
-			tmp += a[row * n + k] * b[k * n + col];
+			tmp += a[row * size + k] * b[k * size + col];
 		}
 
-		c[row * n + col] = tmp;
+		c[row * size + col] = tmp;
 	}
 }
 
-int main()
+int matrixMultiplicationStandard()
 {
 	// Instantiate a 1024x1024 matrix
 	const int size = 1 << 10;
 	const int bytes = size * size * sizeof(int);
+
+	// NOTE we treat matrices as 1D arrays
 
 	// CPU pointers
 	// Factors matrices
@@ -92,9 +94,9 @@ int main()
 	cudaMalloc(&d_b, bytes);
 	cudaMalloc(&d_c, bytes);
 
-	initMatrix(h_a);
-	initMatrix(h_b);
-	initMatrix(h_c);
+	initMatrix(h_a, size);
+	initMatrix(h_b, size);
+	initMatrix(h_c, size);
 
 	// Copy elements to the GPU
 	cudaMemcpy(d_a, h_a, bytes, cudaMemcpyHostToDevice);
@@ -102,12 +104,12 @@ int main()
 	cudaMemcpy(d_c, h_c, bytes, cudaMemcpyHostToDevice);
 
 	const int BLOCK_SIZE = 256;							// Number of threads for each block
-	const int GRID_SIZE = (int)ceil(n / BLOCK_SIZE);	// Number of blocks in the grid
+	const int GRID_SIZE = (int)ceil(size / BLOCK_SIZE);	// Number of blocks in the grid
 
 	const dim3 grid(GRID_SIZE, GRID_SIZE); // Defines a 3D CUDA Matrix of size GRID_SIZE x GRID_SIZE x 1
 	const dim3 threads(BLOCK_SIZE, BLOCK_SIZE); // BLOCK_SIZE x BLOCK_SIZE x 1
 
-	matrixMultiplication<<<grid, thread>>> (d_a, d_b, d_c, size);
+	matrixMultiplication<<<grid, threads>>>(d_a, d_b, d_c, size);
 
 	cudaMemcpy(h_c, d_c, bytes, cudaMemcpyDeviceToHost);
 
