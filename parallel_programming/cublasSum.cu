@@ -6,8 +6,8 @@
 #include <cuda_runtime.h>
 #include <stdlib.h>
 
-// This method explores the cublas library
-int cublas()
+// This method explores the cublas sum
+int cublasSum()
 {
 	const int size = 1 << 2;
 	const int bytes = size * sizeof(float);
