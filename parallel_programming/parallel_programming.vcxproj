@@ -128,6 +128,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <CudaCompile Include="main.cu" />
     <CudaCompile Include="matrix_multiplication.cu" />
     <CudaCompile Include="matrix_multiplication_tiled.cu" />
     <CudaCompile Include="sum_reduction.cu" />
