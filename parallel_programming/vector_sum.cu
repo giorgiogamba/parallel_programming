@@ -31,7 +31,7 @@ void initVector(int* m, const int size)
 	}
 }
 
-int main()
+int vector_sum()
 {
 	int length = 1 << 16; // number composed by 16 1s (65536 elements)
 	int* h_a;
