@@ -130,6 +130,7 @@
   <ItemGroup>
     <CudaCompile Include="matrix_multiplication.cu" />
     <CudaCompile Include="matrix_multiplication_tiled.cu" />
+    <CudaCompile Include="sum_reduction.cu" />
     <CudaCompile Include="vector_sum.cu" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
