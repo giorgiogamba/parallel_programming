@@ -60,10 +60,22 @@ __global__ void sun_reduction_diverged(int* input, int* output)
 	// Iteration in a log2 base manner the lock dimension, because at each step we are summing the element to the thread on the left
 	for (int stride = 1; stride < blockDim.x; stride *= 2)
 	{
+		// DIVERGED Implementation
+	 
 		// Takes only threads in even position and doubling always the distance -> log2 space
 		if (threadIdx.x % (2 * stride) == 0)
 		{
 			partial_sum[threadIdx.x] += partial_sum[threadIdx.x + stride];
+		}
+
+		// BANK CONFLICT Implementation
+		// Computes index without using modulo operation
+		// With this operation we see that the thread is shift to the right at each iteration -> only the lower index threads keep working
+		int idx = 2 * stride * threadIdx.x;
+
+		if (idx < blockDim.x)
+		{
+			partial_sum[idx] += partial_sum[idx + stride];
 		}
 
 		syncthreads();
