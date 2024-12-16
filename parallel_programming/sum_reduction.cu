@@ -69,6 +69,7 @@ __global__ void sun_reduction_diverged(int* input, int* output)
 		}
 
 		// BANK CONFLICT Implementation
+		// The double faster
 		// Computes index without using modulo operation
 		// With this operation we see that the thread is shift to the right at each iteration -> only the lower index threads keep working
 		int idx = 2 * stride * threadIdx.x;
