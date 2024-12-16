@@ -15,7 +15,7 @@
 
 // @param v input
 // @param r output
-__global__ void sum_reduction(int* v, int* r)
+__global__ void my_sum_reduction(int* v, int* r)
 {
 	// Allocate shared memory
 	__shared__ int partialSum[SHMEMSIZE];
@@ -45,7 +45,36 @@ __global__ void sum_reduction(int* v, int* r)
 		r[blockIdx.x] = partialSum[0];
 }
 
-int sum_reduction()
+// This is an inefficient implementation that uses modulo op
+__global__ void sun_reduction_diverged(int* input, int* output)
+{
+	__shared__ int partial_sum[SHMEMSIZE];
+
+	int threadID = blockID.x * blockDim.x + threadIdx.x;
+
+	// Loads elements inside shared memory
+	// Each thread loads its input number inside its memory location inside the shared memory
+	partial_sum[threadIdx.x] = input[threadID];
+	__syncthreads();
+
+	// Iteration in a log2 base manner the lock dimension, because at each step we are summing the element to the thread on the left
+	for (int stride = 1; stride < blockDim.x; stride *= 2)
+	{
+		// Takes only threads in even position and doubling always the distance -> log2 space
+		if (threadIdx.x % (2 * stride) == 0)
+		{
+			partial_sum[threadIdx.x] += partial_sum[threadIdx.x + stride];
+		}
+
+		syncthreads();
+	}
+
+	// At the end on calculation, only the thread at position 0 will be active
+	if (threadIdx.x == 0)
+		output[blockIdx.x] = partial_sum[0];
+}
+
+int sum_reduction_test()
 {
 	// Initialize vector of 2^16 elements
 	const int length = 1 << 16; // 2^16
@@ -75,11 +104,11 @@ int sum_reduction()
 	const int gridSize = (int)ceil(length / TBSIZE);
 
 	// First, we computer inside 256 block 256 partial sums
-	sum_reduction <<<gridSize, TBSIZE >>> (dv, dr);
+	my_sum_reduction <<<gridSize, TBSIZE >>> (dv, dr);
 
 	// Then, we will have a vector of 256 elements, each one representing a partial sum, and we reduce it
 	// (note that we use the resulting vector as input also
-	sum_reduction<<<1, TBSIZE>>>(dr, dr);
+	my_sum_reduction<<<1, TBSIZE>>>(dr, dr);
 
 	cudaMemcpy(hr, dr, bytes, cudaMemcpyDeviceToHost);
 
